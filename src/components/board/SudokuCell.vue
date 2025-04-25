@@ -8,6 +8,7 @@
       cell.isHighlighted ? 'bg-blue-100' : '',
       isSelected ? 'bg-blue-200 ring-2 ring-blue-500' : '',
       isSameValue ? 'bg-blue-50' : '',
+      hasAnimation ? 'animate-hint' : '',
       bgColor
     ]"
     @click="$emit('select')"
@@ -31,11 +32,23 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useGameStore } from '../../stores/gameStore';
 import type { SudokuCell } from '../../types/sudoku';
+
+const gameStore = useGameStore();
 
 const props = defineProps({
   cell: {
     type: Object as () => SudokuCell,
+    required: true
+  },
+  row: {
+    type: Number,
+    required: true
+  },
+  col: {
+    type: Number,
     required: true
   },
   isSelected: {
@@ -56,6 +69,13 @@ const props = defineProps({
   }
 });
 
+// 检查当前单元格是否有动画
+const hasAnimation = computed(() => {
+  return gameStore.cellAnimation && 
+         gameStore.cellAnimation.row === props.row && 
+         gameStore.cellAnimation.col === props.col;
+});
+
 defineEmits(['select']);
 </script>
 
@@ -64,5 +84,15 @@ defineEmits(['select']);
   aspect-ratio: 1 / 1;
   cursor: pointer;
   user-select: none;
+}
+
+@keyframes hint-animation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); background-color: rgba(74, 222, 128, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.animate-hint {
+  animation: hint-animation 0.5s ease;
 }
 </style>

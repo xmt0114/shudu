@@ -12,6 +12,8 @@
       v-for="(cell, index) in flattenedBoard"
       :key="`${cell.row}-${cell.col}`"
       :cell="cell"
+      :row="cell.row"
+      :col="cell.col"
       :is-selected="isSelected(cell.row, cell.col)"
       :is-same-value="isSameValue(cell)"
       :max-value="size"

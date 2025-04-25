@@ -3,7 +3,7 @@ import { DIFFICULTY_LEVELS, SUDOKU_SIZES } from '../types/constants';
 import type { SudokuSize, DifficultyLevel } from '../types/constants';
 import type { SudokuBoard, Move, GameState } from '../types/sudoku';
 import { generatePuzzle } from '../utils/sudokuGenerator';
-import { isSudokuComplete, hasCellError } from '../utils/sudokuValidator';
+import { isSudokuComplete, hasCellError, getPossibleValues } from '../utils/sudokuValidator';
 
 export const useGameStore = defineStore('game', {
   state: (): GameState => ({
@@ -16,7 +16,14 @@ export const useGameStore = defineStore('game', {
     isCompleted: false,
     moveHistory: [],
     selectedCell: null,
-    noteMode: false
+    noteMode: false,
+    notification: {
+      message: '',
+      visible: false,
+      type: 'info'
+    },
+    notificationQueue: [],
+    cellAnimation: null
   }),
 
   getters: {
@@ -127,25 +134,62 @@ export const useGameStore = defineStore('game', {
 
     // 获取提示
     getHint() {
-      if (!this.selectedCell || this.isCompleted || this.isPaused) return;
+      if (!this.selectedCell || this.isCompleted || this.isPaused) {
+        this.showNotification('游戏暂停或已完成', 'warning');
+        return;
+      }
 
       const { row, col } = this.selectedCell;
       const cell = this.board[row][col];
 
-      // 如果是预设数字或已有正确值，不提供提示
-      if (cell.isGiven || (cell.value !== null && !cell.isError)) return;
+      // 如果是预设数字，显示通知
+      if (cell.isGiven) {
+        this.showNotification('这是预设数字，不能修改', 'info');
+        return;
+      }
 
-      // TODO: 实现获取正确值的逻辑
-      // 这里需要访问完整解决方案，或者重新求解
+      // 如果已有正确值，显示通知
+      if (cell.value !== null && !cell.isError) {
+        this.showNotification('此格已有正确数字', 'info');
+        return;
+      }
 
-      // 记录操作
-      this.moveHistory.push({
-        row,
-        col,
-        prevValue: cell.value,
-        newValue: cell.value, // 暂时不变
-        timestamp: Date.now()
-      });
+      // 使用getPossibleValues获取可能的值
+      const possibleValues = getPossibleValues(this.board, row, col);
+      
+      // 如果有可能的值，随机选择一个
+      if (possibleValues.length > 0) {
+        const prevValue = cell.value;
+        const newValue = possibleValues[Math.floor(Math.random() * possibleValues.length)];
+        
+        // 设置单元格动画
+        this.cellAnimation = { row, col };
+        setTimeout(() => {
+          this.cellAnimation = null;
+        }, 500);
+        
+        // 填入新值
+        cell.value = newValue;
+        cell.notes = [];
+        cell.isError = false; // 提示的值应该是正确的
+        
+        // 记录操作
+        this.moveHistory.push({
+          row,
+          col,
+          prevValue,
+          newValue,
+          timestamp: Date.now()
+        });
+        
+        // 显示成功通知
+        this.showNotification('已填入提示数字', 'success');
+        
+        // 检查游戏是否完成
+        this.checkCompletion();
+      } else {
+        this.showNotification('无法确定此格的值', 'warning');
+      }
     },
 
     // 检查游戏是否完成
@@ -187,6 +231,54 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
+    },
+    
+    // 显示通知
+    showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') {
+      // 创建新的通知对象
+      const newNotification = {
+        message,
+        type,
+        id: Date.now()
+      };
+      
+      // 将通知添加到队列
+      this.notificationQueue.push(newNotification);
+      
+      // 如果当前没有显示通知，则显示队列中的第一个
+      if (!this.notification.visible) {
+        this.processNotificationQueue();
+      }
+    },
+    
+    // 处理通知队列
+    processNotificationQueue() {
+      // 如果队列为空，则不做任何操作
+      if (this.notificationQueue.length === 0) {
+        return;
+      }
+      
+      // 取出队列中的第一个通知
+      const nextNotification = this.notificationQueue.shift();
+      
+      // 显示通知
+      this.notification = {
+        message: nextNotification.message,
+        visible: true,
+        type: nextNotification.type
+      };
+      
+      // 7秒后自动关闭通知，并处理队列中的下一个通知
+      setTimeout(() => {
+        this.notification.visible = false;
+        
+        // 延迟一小段时间后处理下一个通知，确保动画效果完成
+        setTimeout(() => {
+          if (this.notificationQueue.length > 0) {
+            this.processNotificationQueue();
+          }
+        }, 100);
+      }, 2000);
     }
   }
 });
