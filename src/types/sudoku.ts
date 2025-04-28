@@ -48,15 +48,5 @@ export interface GameState {
   moveHistory: Move[];        // 操作历史
   selectedCell: { row: number; col: number } | null;
   noteMode: boolean;          // 是否处于笔记模式
-  notification: {
-    message: string;
-    visible: boolean;
-    type: 'info' | 'success' | 'warning' | 'error';
-  };
-  notificationQueue: Array<{
-    message: string;
-    type: 'info' | 'success' | 'warning' | 'error';
-    id: number;
-  }>;
   cellAnimation: { row: number; col: number } | null;  // 单元格动画
 }
