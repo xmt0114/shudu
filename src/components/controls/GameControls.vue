@@ -1,8 +1,8 @@
 <template>
-  <div class="game-controls bg-white p-4 rounded-lg shadow-md">
+  <div class="game-controls bg-white p-4 rounded-lg shadow-md max-w-md mx-auto">
     <!-- PC模式下的布局 -->
-    <div v-if="!showNumberPad" class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
+    <div v-if="!showNumberPad" class="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
+      <div class="flex items-center gap-3 mb-2 sm:mb-0">
         <div class="text-lg font-semibold">
           {{ difficultyText }}
         </div>
@@ -11,7 +11,7 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 justify-center">
         <Button
           variant="primary"
           size="sm"
@@ -39,7 +39,7 @@
     </div>
 
     <!-- 移动端模式下的布局 -->
-    <div v-else>
+    <div v-else class="w-full">
       <div class="flex justify-between items-center mb-4">
         <div class="text-lg font-semibold">
           {{ difficultyText }}
@@ -77,7 +77,7 @@
     <NumberPad v-if="showNumberPad" :size="size" />
     
     <!-- 功能按钮 - 在PC端也显示 -->
-    <div v-if="!showNumberPad" class="mt-4 flex flex-wrap gap-2">
+    <div v-if="!showNumberPad" class="mt-4 flex flex-wrap gap-2 justify-center w-full">
       <Button
         variant="secondary"
         size="sm"

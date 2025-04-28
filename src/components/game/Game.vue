@@ -2,7 +2,7 @@
   <div class="game-container">
     <!-- PC布局：控制元素在上方 -->
     <div class="hidden lg:block">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
         <!-- 游戏控制 -->
         <div class="w-full">
           <GameControls :show-number-pad="false" />
@@ -10,7 +10,7 @@
 
         <!-- 游戏棋盘 -->
         <div class="flex justify-center">
-          <div class="w-full max-w-md">
+          <div class="w-full max-w-md mx-auto">
             <SudokuBoard
               :board="board"
               :size="size"

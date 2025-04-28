@@ -1,6 +1,6 @@
 <template>
   <div
-    class="sudoku-board"
+    class="sudoku-board max-w-md mx-auto w-full"
     :class="[
       size === 4 ? 'grid-cols-4' :
       size === 6 ? 'grid-cols-6' :
@@ -121,18 +121,13 @@ const getCellBorderClasses = (row: number, col: number) => {
 </script>
 
 <style scoped>
+/* 根据不同尺寸设置不同的边框样式 */
 .sudoku-board {
   display: grid;
-  gap: 0;
-  border: 2px solid #333;
-  width: 100%;
-  max-width: 500px;
+  gap: 1px;
+  border: 4px solid #333;
   margin: 0 auto;
-}
-
-@media (max-width: 640px) {
-  .sudoku-board {
-    max-width: 100%;
-  }
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

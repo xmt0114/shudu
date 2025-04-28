@@ -14,7 +14,10 @@
     @click="$emit('select')"
   >
     <!-- 单元格值 -->
-    <span v-if="cell.value" class="text-lg md:text-xl">
+    <span v-if="cell.value" :class="{
+      'text-xl md:text-2xl': maxValue <= 4,
+      'text-lg md:text-xl': maxValue > 4
+    }">
       {{ cell.value }}
     </span>
 
