@@ -18,7 +18,9 @@ export const useGameStore = defineStore('game', {
     moveHistory: [],
     selectedCell: null,
     noteMode: false,
-    cellAnimation: null
+    cellAnimation: null,
+    hintsRemaining: 3,
+    maxHints: 3
   }),
 
   getters: {
@@ -55,6 +57,46 @@ export const useGameStore = defineStore('game', {
       this.moveHistory = [];
       this.selectedCell = null;
       this.noteMode = false;
+      
+      // 根据难度和宫格大小设置提示次数
+      this.maxHints = this.calculateMaxHints(size, difficulty);
+      this.hintsRemaining = this.maxHints;
+    },
+    
+    // 计算最大提示次数
+    calculateMaxHints(size: SudokuSize, difficulty: DifficultyLevel): number {
+      // 基础提示次数
+      let baseHints = 3;
+      
+      // 根据难度调整
+      switch(difficulty) {
+        case 'easy':
+          baseHints += 2;
+          break;
+        case 'medium':
+          baseHints += 0;
+          break;
+        case 'hard':
+          baseHints -= 1;
+          break;
+        case 'expert':
+          baseHints -= 2;
+          break;
+      }
+      
+      // 根据宫格大小调整
+      if (size === 4) {
+        baseHints -= 1;
+      } else if (size === 6) {
+        baseHints += 0;
+      } else if (size === 8) {
+        baseHints += 1;
+      } else if (size === 9) {
+        baseHints += 1;
+      }
+      
+      // 确保至少有1次提示
+      return Math.max(1, baseHints);
     },
 
     // 选择单元格
@@ -126,6 +168,16 @@ export const useGameStore = defineStore('game', {
       // 检查游戏是否完成
       this.checkCompletion();
     },
+    
+    // 检查是否可以撤销
+    canUndo(): boolean {
+      return this.moveHistory.length > 0;
+    },
+    
+    // 检查是否可以使用提示
+    canUseHint(): boolean {
+      return this.hintsRemaining > 0 && !this.isPaused && !this.isCompleted;
+    },
 
     // 获取提示
     getHint() {
@@ -138,6 +190,12 @@ export const useGameStore = defineStore('game', {
       // 检查游戏状态
       if (this.isCompleted || this.isPaused) {
         ElMessage.warning('游戏暂停或已完成');
+        return;
+      }
+      
+      // 检查提示次数
+      if (this.hintsRemaining <= 0) {
+        ElMessage.warning('提示次数已用完');
         return;
       }
 
@@ -184,8 +242,11 @@ export const useGameStore = defineStore('game', {
           timestamp: Date.now()
         });
         
+        // 减少提示次数
+        this.hintsRemaining--;
+        
         // 显示成功通知
-        ElMessage.success('已填入提示数字');
+        ElMessage.success(`已填入提示数字，剩余提示次数: ${this.hintsRemaining}`);
         
         // 检查游戏是否完成
         this.checkCompletion();
@@ -220,8 +281,11 @@ export const useGameStore = defineStore('game', {
               timestamp: Date.now()
             });
             
+            // 减少提示次数
+            this.hintsRemaining--;
+            
             // 显示成功通知
-            ElMessage.success('已修正错误并填入正确数字');
+            ElMessage.success(`已修正错误并填入正确数字，剩余提示次数: ${this.hintsRemaining}`);
             
             // 检查游戏是否完成
             this.checkCompletion();

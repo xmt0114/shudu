@@ -49,4 +49,6 @@ export interface GameState {
   selectedCell: { row: number; col: number } | null;
   noteMode: boolean;          // 是否处于笔记模式
   cellAnimation: { row: number; col: number } | null;  // 单元格动画
+  hintsRemaining: number;     // 剩余提示次数
+  maxHints: number;           // 最大提示次数
 }
