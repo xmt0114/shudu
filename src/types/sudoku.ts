@@ -51,4 +51,8 @@ export interface GameState {
   cellAnimation: { row: number; col: number } | null;  // 单元格动画
   hintsRemaining: number;     // 剩余提示次数
   maxHints: number;           // 最大提示次数
+  checksRemaining: number;    // 剩余检查次数
+  maxChecks: number;          // 最大检查次数
+  conflictCells: { row: number; col: number }[];  // 冲突单元格
+  showErrors: boolean;        // 是否显示错误
 }

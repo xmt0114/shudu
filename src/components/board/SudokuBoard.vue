@@ -18,6 +18,7 @@
       :is-same-value="isSameValue(cell)"
       :max-value="size"
       :bg-color="getCellBackgroundColor(cell.row, cell.col)"
+      :is-conflict="isConflictCell(cell.row, cell.col)"
       @select="selectCell(cell.row, cell.col)"
       :class="getCellBorderClasses(cell.row, cell.col)"
     />
@@ -91,6 +92,11 @@ const getCellBackgroundColor = (row: number, col: number) => {
   // 使用区域索引来选择颜色，确保相邻区域颜色不同
   // 使用更明显的颜色
   return bgColors[regionIndex % bgColors.length];
+};
+
+// 检查单元格是否是冲突单元格
+const isConflictCell = (row: number, col: number) => {
+  return gameStore.conflictCells.some(cell => cell.row === row && cell.col === col);
 };
 
 // 获取单元格边框样式

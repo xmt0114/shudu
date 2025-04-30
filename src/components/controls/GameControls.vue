@@ -31,9 +31,11 @@
         <Button
           variant="secondary"
           size="sm"
-          @click="checkErrors"
+          :disabled="!canUseCheck"
+          :class="{ 'opacity-50 cursor-not-allowed': !canUseCheck }"
+          @click="checkSelectedCell"
         >
-          检查
+          检查 ({{ checksRemaining }}/{{ maxChecks }})
         </Button>
       </div>
     </div>
@@ -66,9 +68,11 @@
 
         <Button
           variant="secondary"
-          @click="checkErrors"
+          :disabled="!canUseCheck"
+          :class="{ 'opacity-50 cursor-not-allowed': !canUseCheck }"
+          @click="checkSelectedCell"
         >
-          检查
+          检查 ({{ checksRemaining }}/{{ maxChecks }})
         </Button>
       </div>
     </div>
@@ -230,6 +234,9 @@ const hintsRemaining = computed(() => gameStore.hintsRemaining);
 const maxHints = computed(() => gameStore.maxHints);
 const canUseHint = computed(() => gameStore.canUseHint());
 const canUndo = computed(() => gameStore.canUndo());
+const canUseCheck = computed(() => gameStore.canUseCheck());
+const checksRemaining = computed(() => gameStore.checksRemaining);
+const maxChecks = computed(() => gameStore.maxChecks);
 
 // 模态框状态
 const showNewGameModal = ref(false);
@@ -272,9 +279,9 @@ const togglePause = () => {
   gameStore.togglePause();
 };
 
-// 检查错误
-const checkErrors = () => {
-  gameStore.checkErrors();
+// 检查当前选中单元格
+const checkSelectedCell = () => {
+  gameStore.checkSelectedCell();
 };
 
 // 切换笔记模式

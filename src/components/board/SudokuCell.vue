@@ -9,6 +9,7 @@
       isSelected ? 'bg-blue-200 ring-2 ring-blue-500' : '',
       isSameValue ? 'bg-blue-50' : '',
       hasAnimation ? 'animate-hint' : '',
+      isConflict ? 'animate-conflict text-red-500' : '',
       bgColor
     ]"
     @click="$emit('select')"
@@ -62,6 +63,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  isConflict: {
+    type: Boolean,
+    default: false
+  },
   maxValue: {
     type: Number,
     default: 9
@@ -97,5 +102,16 @@ defineEmits(['select']);
 
 .animate-hint {
   animation: hint-animation 0.5s ease;
+}
+
+@keyframes conflict-animation {
+  0% { transform: scale(1); }
+  33% { transform: scale(1.1); background-color: rgba(239, 68, 68, 0.5); }
+  66% { transform: scale(1); background-color: rgba(239, 68, 68, 0.3); }
+  100% { transform: scale(1.1); background-color: rgba(239, 68, 68, 0.5); }
+}
+
+.animate-conflict {
+  animation: conflict-animation 1s ease 3;
 }
 </style>

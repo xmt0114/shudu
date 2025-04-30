@@ -20,7 +20,11 @@ export const useGameStore = defineStore('game', {
     noteMode: false,
     cellAnimation: null,
     hintsRemaining: 3,
-    maxHints: 3
+    maxHints: 3,
+    checksRemaining: 5,
+    maxChecks: 5,
+    conflictCells: [],
+    showErrors: false
   }),
 
   getters: {
@@ -57,10 +61,16 @@ export const useGameStore = defineStore('game', {
       this.moveHistory = [];
       this.selectedCell = null;
       this.noteMode = false;
+      this.conflictCells = [];
+      this.showErrors = false;
       
       // 根据难度和宫格大小设置提示次数
       this.maxHints = this.calculateMaxHints(size, difficulty);
       this.hintsRemaining = this.maxHints;
+      
+      // 根据难度和宫格大小设置检查次数
+      this.maxChecks = this.calculateMaxChecks(size, difficulty);
+      this.checksRemaining = this.maxChecks;
     },
     
     // 计算最大提示次数
@@ -97,6 +107,42 @@ export const useGameStore = defineStore('game', {
       
       // 确保至少有1次提示
       return Math.max(1, baseHints);
+    },
+    
+    // 计算最大检查次数
+    calculateMaxChecks(size: SudokuSize, difficulty: DifficultyLevel): number {
+      // 基础检查次数
+      let baseChecks = 5;
+      
+      // 根据难度调整
+      switch(difficulty) {
+        case 'easy':
+          baseChecks += 3;
+          break;
+        case 'medium':
+          baseChecks += 0;
+          break;
+        case 'hard':
+          baseChecks -= 2;
+          break;
+        case 'expert':
+          baseChecks -= 3;
+          break;
+      }
+      
+      // 根据宫格大小调整
+      if (size === 4) {
+        baseChecks -= 1;
+      } else if (size === 6) {
+        baseChecks += 0;
+      } else if (size === 8) {
+        baseChecks += 1;
+      } else if (size === 9) {
+        baseChecks += 2;
+      }
+      
+      // 确保至少有2次检查
+      return Math.max(2, baseChecks);
     },
 
     // 选择单元格
@@ -142,8 +188,12 @@ export const useGameStore = defineStore('game', {
           timestamp: Date.now()
         });
 
-        // 检查单元格是否有错误
-        cell.isError = cell.value !== null && hasCellError(this.board, row, col);
+        // 只有在显示错误的模式下才立即显示错误
+        if (this.showErrors && cell.value !== null) {
+          cell.isError = hasCellError(this.board, row, col);
+        } else {
+          cell.isError = false;
+        }
 
         // 检查游戏是否完成
         this.checkCompletion();
@@ -177,6 +227,11 @@ export const useGameStore = defineStore('game', {
     // 检查是否可以使用提示
     canUseHint(): boolean {
       return this.hintsRemaining > 0 && !this.isPaused && !this.isCompleted;
+    },
+    
+    // 检查是否可以使用检查功能
+    canUseCheck(): boolean {
+      return this.checksRemaining > 0 && !this.isPaused && !this.isCompleted && this.selectedCell !== null;
     },
 
     // 获取提示
@@ -299,10 +354,24 @@ export const useGameStore = defineStore('game', {
 
     // 检查游戏是否完成
     checkCompletion() {
-      if (isSudokuComplete(this.board)) {
+      // 检查是否有空格
+      for (let row = 0; row < this.size; row++) {
+        for (let col = 0; col < this.size; col++) {
+          if (this.board[row][col].value === null) {
+            return false;
+          }
+        }
+      }
+      
+      // 检查是否有错误
+      const hasError = this.checkAllErrors();
+      
+      if (!hasError) {
         this.isCompleted = true;
         this.isPaused = true;
       }
+      
+      return !hasError;
     },
 
     // 暂停/继续游戏
@@ -326,16 +395,117 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    // 检查错误
-    checkErrors() {
+    // 检查当前选中单元格
+    checkSelectedCell() {
+      // 检查是否选中了单元格
+      if (!this.selectedCell) {
+        ElMessage.warning('请选中某个单元格');
+        return;
+      }
+      
+      // 检查游戏状态
+      if (this.isCompleted || this.isPaused) {
+        ElMessage.warning('游戏暂停或已完成');
+        return;
+      }
+      
+      // 检查检查次数
+      if (this.checksRemaining <= 0) {
+        ElMessage.warning('检查次数已用完');
+        return;
+      }
+
+      const { row, col } = this.selectedCell;
+      const cell = this.board[row][col];
+
+      // 如果是预设数字，显示通知
+      if (cell.isGiven) {
+        ElMessage.info('这是预设数字，不需要检查');
+        return;
+      }
+
+      // 如果单元格为空，显示通知
+      if (cell.value === null) {
+        ElMessage.info('请先填入数字再检查');
+        return;
+      }
+
+      // 减少检查次数
+      this.checksRemaining--;
+      
+      // 检查单元格是否有错误
+      const hasError = hasCellError(this.board, row, col);
+      
+      if (hasError) {
+        // 找出冲突的单元格
+        this.findConflictCells(row, col, cell.value);
+        
+        // 设置当前单元格为错误
+        cell.isError = true;
+        
+        // 显示错误通知
+        ElMessage.error(`数字填写错误，剩余检查次数: ${this.checksRemaining}`);
+        
+        // 设置动画效果，3秒后恢复
+        setTimeout(() => {
+          // 清除冲突单元格
+          this.conflictCells = [];
+          // 清除错误标记
+          cell.isError = false;
+        }, 3000);
+      } else {
+        // 显示成功通知
+        ElMessage.success(`数字填写正确，剩余检查次数: ${this.checksRemaining}`);
+      }
+    },
+    
+    // 找出冲突的单元格
+    findConflictCells(row: number, col: number, value: number) {
+      this.conflictCells = [];
+      const size = this.size;
+      const regionIndex = this.board[row][col].region;
+      
+      // 检查行
+      for (let c = 0; c < size; c++) {
+        if (c !== col && this.board[row][c].value === value) {
+          this.conflictCells.push({ row, col: c });
+        }
+      }
+      
+      // 检查列
+      for (let r = 0; r < size; r++) {
+        if (r !== row && this.board[r][col].value === value) {
+          this.conflictCells.push({ row: r, col });
+        }
+      }
+      
+      // 检查区域
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if ((r !== row || c !== col) &&
+              this.board[r][c].region === regionIndex &&
+              this.board[r][c].value === value) {
+            this.conflictCells.push({ row: r, col: c });
+          }
+        }
+      }
+    },
+    
+    // 检查所有单元格错误（仅用于游戏完成检查）
+    checkAllErrors() {
+      let hasError = false;
       for (let row = 0; row < this.size; row++) {
         for (let col = 0; col < this.size; col++) {
           const cell = this.board[row][col];
           if (cell.value !== null) {
-            cell.isError = hasCellError(this.board, row, col);
+            const cellHasError = hasCellError(this.board, row, col);
+            if (cellHasError) {
+              hasError = true;
+            }
           }
         }
       }
+      return hasError;
     },
     
 
