@@ -508,6 +508,9 @@ export const useGameStore = defineStore('game', {
       return hasError;
     },
     
-
+    // 重置游戏完成状态
+    resetCompletionState() {
+      this.isCompleted = false;
+    }
   }
 });

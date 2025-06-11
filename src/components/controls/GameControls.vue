@@ -196,7 +196,7 @@
       <template #footer>
         <Button
           variant="primary"
-          @click="showNewGameModal = true"
+          @click="startNewGameFromCompletion"
         >
           新游戏
         </Button>
@@ -261,17 +261,81 @@ const difficultyText = computed(() => {
 });
 
 // 监听游戏完成状态
+let isHandlingCompletion = false;
+let modalStateChangeTimer: number | null = null;
+
 watch(() => gameStore.isCompleted, (newValue) => {
-  if (newValue) {
+  console.log('[GameControls Debug] 游戏完成状态变化:', newValue, '当前模态框状态:', showCompletionModal.value, '处理标志:', isHandlingCompletion);
+  // 避免在处理完成状态时重复触发
+  if (newValue && !showCompletionModal.value && !isHandlingCompletion) {
+    isHandlingCompletion = true;
+    console.log('[GameControls Debug] 尝试显示完成模态框');
+    
+    // 清除之前可能存在的定时器
+    if (modalStateChangeTimer !== null) {
+      clearTimeout(modalStateChangeTimer);
+      console.log('[GameControls Debug] 清除之前的模态框状态变化定时器');
+    }
+    
     showCompletionModal.value = true;
+    
+    // 重置处理标志
+    modalStateChangeTimer = window.setTimeout(() => {
+      isHandlingCompletion = false;
+      modalStateChangeTimer = null;
+      console.log('[GameControls Debug] 重置处理标志完成');
+    }, 500); // 增加延迟时间，确保有足够的时间完成状态变化
   }
+});
+
+// 监控模态框状态变化
+watch(() => showCompletionModal.value, (newValue) => {
+  console.log('[GameControls Debug] 完成模态框状态变化:', newValue);
+});
+
+watch(() => showNewGameModal.value, (newValue) => {
+  console.log('[GameControls Debug] 新游戏模态框状态变化:', newValue);
 });
 
 // 开始新游戏
 const startNewGame = () => {
-  gameStore.startNewGame(selectedSize.value, selectedDifficulty.value);
+  console.log('[GameControls Debug] 开始新游戏 - 开始');
+  // 确保所有模态框都关闭
+  console.log('[GameControls Debug] 关闭新游戏模态框，当前状态:', showNewGameModal.value);
   showNewGameModal.value = false;
+  console.log('[GameControls Debug] 新游戏模态框状态设置为:', showNewGameModal.value);
+  
+  console.log('[GameControls Debug] 确保完成模态框关闭，当前状态:', showCompletionModal.value);
   showCompletionModal.value = false;
+  
+  // 延迟一下再开始新游戏，确保模态框已完全关闭
+  console.log('[GameControls Debug] 设置定时器准备开始新游戏');
+  setTimeout(() => {
+    console.log('[GameControls Debug] 定时器触发，准备开始新游戏，尺寸:', selectedSize.value, '难度:', selectedDifficulty.value);
+    gameStore.startNewGame(selectedSize.value, selectedDifficulty.value);
+    console.log('[GameControls Debug] 新游戏已启动');
+  }, 300); // 增加延迟时间从100ms到300ms，与startNewGameFromCompletion保持一致
+};
+
+// 从完成游戏弹窗启动新游戏
+const startNewGameFromCompletion = () => {
+  console.log('[GameControls Debug] 从完成弹窗启动新游戏 - 开始');
+  // 先关闭完成弹窗并立即重置游戏完成状态
+  console.log('[GameControls Debug] 尝试关闭完成弹窗，当前状态:', showCompletionModal.value);
+  showCompletionModal.value = false;
+  console.log('[GameControls Debug] 关闭完成弹窗后，状态变为:', showCompletionModal.value);
+  
+  gameStore.resetCompletionState();
+  console.log('[GameControls Debug] 已重置游戏完成状态');
+  
+  // 使用setTimeout确保完成弹窗完全关闭后再显示新游戏弹窗
+  // 增加延迟时间，确保动画完全结束
+  console.log('[GameControls Debug] 设置定时器准备显示新游戏弹窗');
+  setTimeout(() => {
+    console.log('[GameControls Debug] 定时器触发，准备显示新游戏弹窗');
+    showNewGameModal.value = true;
+    console.log('[GameControls Debug] 新游戏弹窗状态设置为:', showNewGameModal.value);
+  }, 300); // 增加延迟时间从100ms到300ms
 };
 
 // 暂停/继续游戏
