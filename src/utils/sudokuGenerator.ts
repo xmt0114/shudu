@@ -1,6 +1,5 @@
-import { SUDOKU_SIZES, DIFFICULTY_LEVELS } from '../types/constants';
 import type { SudokuSize, DifficultyLevel } from '../types/constants';
-import type { SudokuBoard, Region, SudokuCell } from '../types/sudoku';
+import type { SudokuBoard, Region } from '../types/sudoku';
 
 // 不同尺寸的区域定义
 const regionDefinitions: Record<SudokuSize, Region[]> = {

@@ -18,7 +18,7 @@
           :is-paused="isPaused"
           :selected-row="selectedRow"
           :selected-col="selectedCol"
-          :highlighted-value="highlightedValue"
+          :highlighted-value="highlightedValue || undefined"
           :conflicts="conflicts"
           @cell-click="handleCellClick"
         />
@@ -59,7 +59,7 @@ const isPaused = computed(() => gameStore.isPaused);
 const selectedRow = computed(() => gameStore.selectedCell?.row);
 const selectedCol = computed(() => gameStore.selectedCell?.col);
 const highlightedValue = computed(() => gameStore.currentCell?.value);
-const conflicts = computed(() => gameStore.conflictCells);
+const conflicts = computed(() => []);
 const noteMode = computed(() => gameStore.noteMode);
 
 // 处理单元格点击

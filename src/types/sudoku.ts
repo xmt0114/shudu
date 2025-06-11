@@ -1,5 +1,5 @@
-// 导入类型定义
-import { DifficultyLevel, SudokuSize } from './constants';
+// 使用type-only导入
+import type { DifficultyLevel, SudokuSize } from './constants';
 
 // 重新导出类型
 export type { DifficultyLevel, SudokuSize };
@@ -33,26 +33,22 @@ export interface Move {
   col: number;
   prevValue: number | null;
   newValue: number | null;
-  timestamp: number;
+  prevNotes: number[];
 }
 
 // 游戏状态
 export interface GameState {
-  board: SudokuBoard;
   size: SudokuSize;
   difficulty: DifficultyLevel;
-  startTime: Date | null;
+  board: SudokuBoard;
+  solution: SudokuBoard;
+  moves: Move[];
+  startTime: Date;
   currentTime: number;        // 游戏时间（秒）
   isPaused: boolean;
   isCompleted: boolean;
-  moveHistory: Move[];        // 操作历史
-  selectedCell: { row: number; col: number } | null;
   noteMode: boolean;          // 是否处于笔记模式
-  cellAnimation: { row: number; col: number } | null;  // 单元格动画
+  selectedCell: { row: number; col: number } | null;
   hintsRemaining: number;     // 剩余提示次数
-  maxHints: number;           // 最大提示次数
   checksRemaining: number;    // 剩余检查次数
-  maxChecks: number;          // 最大检查次数
-  conflictCells: { row: number; col: number }[];  // 冲突单元格
-  showErrors: boolean;        // 是否显示错误
 }

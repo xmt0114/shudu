@@ -1,4 +1,3 @@
-import type { SudokuSize } from '../types/constants';
 import type { SudokuBoard } from '../types/sudoku';
 
 // 检查数独是否已完成

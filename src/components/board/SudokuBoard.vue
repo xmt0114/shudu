@@ -12,7 +12,7 @@
     @touchend="handleTouchEnd"
   >
     <SudokuCell
-      v-for="(cell, index) in flattenedBoard"
+      v-for="cell in flattenedBoard"
       :key="`${cell.row}-${cell.col}`"
       :cell="cell"
       :row="cell.row"
@@ -31,8 +31,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useGameStore } from '../../stores/gameStore';
-import type { SudokuSize } from '../../types/constants';
-import type { SudokuBoard as SudokuBoardType, SudokuCell as SudokuCellType } from '../../types/sudoku';
+import type { SudokuCell as SudokuCellType } from '../../types/sudoku';
 import SudokuCell from './SudokuCell.vue';
 
 // 定义一组更明显的背景颜色
@@ -135,7 +134,11 @@ const getCellBackgroundColor = (row: number, col: number) => {
 
 // 检查单元格是否是冲突单元格
 const isConflictCell = (row: number, col: number) => {
-  return gameStore.conflictCells.some(cell => cell.row === row && cell.col === col);
+  const cell = gameStore.board[row][col];
+  if (cell.value === null) return false;
+  
+  const conflicts = gameStore.findConflictCells(row, col, cell.value);
+  return conflicts.length > 0;
 };
 
 // 获取单元格边框样式
@@ -185,7 +188,7 @@ const handleTouchStart = (event: TouchEvent) => {
     const rowAttr = cell?.getAttribute('data-row');
     const colAttr = cell?.getAttribute('data-col');
     
-    if (rowAttr !== null && colAttr !== null) {
+    if (rowAttr && colAttr) {
       touchedCell.value = {
         row: parseInt(rowAttr),
         col: parseInt(colAttr)
@@ -195,20 +198,13 @@ const handleTouchStart = (event: TouchEvent) => {
 };
 
 // 处理触摸移动事件
-const handleTouchMove = (event: TouchEvent) => {
+const handleTouchMove = (_event: TouchEvent) => {
   // 实现滑动选择逻辑（可选）
 };
 
 // 处理触摸结束事件
-const handleTouchEnd = (event: TouchEvent) => {
-  // 检测是否为快速滑动
-  const touchEndTime = Date.now();
-  const touchDuration = touchEndTime - touchStartTime.value;
-  
-  // 如果是快速滑动，可以实现特殊操作
-  if (touchDuration < 300) {
-    // 快速滑动操作
-  }
+const handleTouchEnd = (_event: TouchEvent) => {
+  // 实现触摸结束逻辑（可选）
 };
 </script>
 

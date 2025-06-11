@@ -95,7 +95,7 @@ const numbers = computed(() => {
 });
 
 // 检查数字是否可用
-const canUseNumber = (num: number) => {
+const canUseNumber = (_num: number) => {
   // 在数独游戏中，所有数字都可用
   return true;
 };
@@ -124,9 +124,6 @@ const canUseHint = computed(() => gameStore.canUseHint());
 
 // 剩余提示次数
 const hintsRemaining = computed(() => gameStore.hintsRemaining);
-
-// 最大提示次数
-const maxHints = computed(() => gameStore.maxHints);
 
 // 切换笔记模式
 const toggleNoteMode = () => {

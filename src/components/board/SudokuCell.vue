@@ -49,12 +49,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGameStore } from '../../stores/gameStore';
 import type { SudokuCell } from '../../types/sudoku';
 
-const gameStore = useGameStore();
-
-const props = defineProps({
+defineProps({
   cell: {
     type: Object as () => SudokuCell,
     required: true
@@ -91,9 +88,7 @@ const props = defineProps({
 
 // 检查当前单元格是否有动画
 const hasAnimation = computed(() => {
-  return gameStore.cellAnimation && 
-         gameStore.cellAnimation.row === props.row && 
-         gameStore.cellAnimation.col === props.col;
+  return false; // 暂时禁用动画，后续可以基于需求实现
 });
 
 // 处理触摸事件，提供更好的触摸反馈

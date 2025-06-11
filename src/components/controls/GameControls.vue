@@ -50,7 +50,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           检查
-          <span class="ml-1">({{ checksRemaining }}/{{ maxChecks }})</span>
+          <span class="ml-1">({{ checksRemaining }})</span>
         </button>
       </div>
 
@@ -89,7 +89,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
           提示
-          <span class="ml-1">({{ hintsRemaining }}/{{ maxHints }})</span>
+          <span class="ml-1">({{ hintsRemaining }})</span>
         </button>
       </div>
     </div>
@@ -269,11 +269,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useGameStore } from '../../stores/gameStore';
-import { SUDOKU_SIZES, DIFFICULTY_LEVELS } from '../../types/constants';
+import { SUDOKU_SIZES } from '../../types/constants';
 import type { DifficultyLevel, SudokuSize } from '../../types/constants';
 import Button from '../ui/Button.vue';
 import Modal from '../ui/Modal.vue';
-import NumberPad from './NumberPad.vue';
 import { ElMessage } from 'element-plus';
 
 const props = defineProps({
@@ -296,12 +295,10 @@ const formattedTime = computed(() => gameStore.formattedTime);
 const size = computed(() => gameStore.size);
 const noteMode = computed(() => gameStore.noteMode);
 const hintsRemaining = computed(() => gameStore.hintsRemaining);
-const maxHints = computed(() => gameStore.maxHints);
 const canUseHint = computed(() => gameStore.canUseHint());
 const canUndo = computed(() => gameStore.canUndo());
 const canUseCheck = computed(() => gameStore.canUseCheck());
 const checksRemaining = computed(() => gameStore.checksRemaining);
-const maxChecks = computed(() => gameStore.maxChecks);
 
 // 模态框状态
 const showNewGameModal = ref(false);
