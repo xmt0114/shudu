@@ -45,6 +45,21 @@ export const useGameStore = defineStore('game', {
     // 获取可用的数字（1到size）
     availableNumbers: (state) => {
       return Array.from({ length: state.size }, (_, i) => i + 1);
+    },
+    
+    // 获取原始谜题（只读）
+    puzzle: (state) => {
+      return state.board;
+    },
+    
+    // 获取用户输入
+    userInput: (state) => {
+      return state.board;
+    },
+    
+    // 获取笔记
+    notes: (state) => {
+      return state.board;
     }
   },
 
@@ -511,6 +526,42 @@ export const useGameStore = defineStore('game', {
     // 重置游戏完成状态
     resetCompletionState() {
       this.isCompleted = false;
+    },
+
+    // 清除选中的单元格
+    clearSelectedCell() {
+      // 如果没有选中单元格或游戏已完成或暂停，不执行操作
+      if (this.selectedCell === null || this.isCompleted || this.isPaused) {
+        return;
+      }
+
+      const { row, col } = this.selectedCell;
+
+      // 如果是原始数字，不能修改
+      if (this.board[row][col].isGiven) {
+        return;
+      }
+
+      // 如果单元格已经是空的，不执行任何操作
+      if (this.board[row][col].value === null && this.board[row][col].notes.length === 0) {
+        return;
+      }
+
+      // 保存操作用于撤销
+      this.moveHistory.push({
+        row,
+        col,
+        prevValue: this.board[row][col].value,
+        newValue: null,
+        timestamp: Date.now()
+      });
+
+      // 清除单元格的值和笔记
+      this.board[row][col].value = null;
+      this.board[row][col].notes = [];
+      
+      // 更新冲突
+      this.conflictCells = [];
     }
   }
 });

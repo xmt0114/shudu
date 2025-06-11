@@ -7,6 +7,9 @@
       size === 8 ? 'grid-cols-8' :
       'grid-cols-9'
     ]"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
   >
     <SudokuCell
       v-for="(cell, index) in flattenedBoard"
@@ -39,13 +42,45 @@ const bgColors = [
 ];
 
 const props = defineProps({
-  board: {
-    type: Array as () => SudokuBoardType,
-    required: true
-  },
   size: {
     type: Number,
     default: 9
+  },
+  puzzle: {
+    type: Array,
+    required: true
+  },
+  userInput: {
+    type: Array,
+    required: true
+  },
+  notes: {
+    type: Array,
+    required: true
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  isPaused: {
+    type: Boolean,
+    default: false
+  },
+  selectedRow: {
+    type: Number,
+    default: null
+  },
+  selectedCol: {
+    type: Number,
+    default: null
+  },
+  highlightedValue: {
+    type: Number,
+    default: null
+  },
+  conflicts: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -54,10 +89,14 @@ const gameStore = useGameStore();
 // 将二维数组扁平化为一维数组，方便渲染
 const flattenedBoard = computed(() => {
   const flattened: SudokuCellType[] = [];
+  if (!gameStore.board || gameStore.board.length === 0) {
+    return flattened;
+  }
+  
   for (let row = 0; row < props.size; row++) {
     for (let col = 0; col < props.size; col++) {
-      if (props.board[row] && props.board[row][col]) {
-        flattened.push(props.board[row][col]);
+      if (gameStore.board[row] && gameStore.board[row][col]) {
+        flattened.push(gameStore.board[row][col]);
       }
     }
   }
@@ -84,10 +123,10 @@ const isSameValue = (cell: SudokuCellType) => {
 
 // 获取单元格背景颜色
 const getCellBackgroundColor = (row: number, col: number) => {
-  if (!props.board[row] || !props.board[row][col]) return '';
+  if (!gameStore.board[row] || !gameStore.board[row][col]) return '';
 
   // 根据区域索引分配颜色
-  const regionIndex = props.board[row][col].region;
+  const regionIndex = gameStore.board[row][col].region;
 
   // 使用区域索引来选择颜色，确保相邻区域颜色不同
   // 使用更明显的颜色
@@ -124,6 +163,53 @@ const getCellBorderClasses = (row: number, col: number) => {
 
   return classes;
 };
+
+// 触摸相关变量
+const touchStartX = ref(0);
+const touchStartY = ref(0);
+const touchStartTime = ref(0);
+const touchedCell = ref<{row: number, col: number} | null>(null);
+
+// 处理触摸开始事件
+const handleTouchStart = (event: TouchEvent) => {
+  if (event.touches.length !== 1) return;
+  
+  touchStartX.value = event.touches[0].clientX;
+  touchStartY.value = event.touches[0].clientY;
+  touchStartTime.value = Date.now();
+  
+  // 获取触摸的单元格
+  const element = document.elementFromPoint(touchStartX.value, touchStartY.value);
+  if (element && element.closest('.sudoku-cell')) {
+    const cell = element.closest('.sudoku-cell');
+    const rowAttr = cell?.getAttribute('data-row');
+    const colAttr = cell?.getAttribute('data-col');
+    
+    if (rowAttr !== null && colAttr !== null) {
+      touchedCell.value = {
+        row: parseInt(rowAttr),
+        col: parseInt(colAttr)
+      };
+    }
+  }
+};
+
+// 处理触摸移动事件
+const handleTouchMove = (event: TouchEvent) => {
+  // 实现滑动选择逻辑（可选）
+};
+
+// 处理触摸结束事件
+const handleTouchEnd = (event: TouchEvent) => {
+  // 检测是否为快速滑动
+  const touchEndTime = Date.now();
+  const touchDuration = touchEndTime - touchStartTime.value;
+  
+  // 如果是快速滑动，可以实现特殊操作
+  if (touchDuration < 300) {
+    // 快速滑动操作
+  }
+};
 </script>
 
 <style scoped>
@@ -135,5 +221,14 @@ const getCellBorderClasses = (row: number, col: number) => {
   margin: 0 auto;
   width: 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  touch-action: manipulation;
+}
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  .sudoku-board {
+    gap: 0.5px;
+    border-width: 3px;
+  }
 }
 </style>

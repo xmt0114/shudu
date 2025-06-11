@@ -1,130 +1,191 @@
 <template>
-  <div class="game-controls bg-white p-4 rounded-lg shadow-md max-w-md mx-auto">
+  <div class="game-controls" :class="{ 'max-w-md mx-auto': !showNumberPad }">
     <!-- PC模式下的布局 -->
-    <div v-if="!showNumberPad" class="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
-      <div class="flex items-center gap-3 mb-2 sm:mb-0">
-        <div class="text-lg font-semibold">
-          {{ difficultyText }}
+    <div v-if="!isMobile" class="flex flex-col items-center justify-between gap-3 w-full">
+      <!-- 难度和时间显示 -->
+      <div class="flex items-center justify-center gap-6 bg-white p-3 rounded-lg shadow-md w-full mb-2">
+        <div class="flex items-center">
+          <div class="text-base text-gray-500 mr-2">难度:</div>
+          <div class="text-xl font-semibold text-blue-600">{{ difficultyText }}</div>
         </div>
-        <div class="text-lg font-mono">
-          {{ formattedTime }}
+        <div class="h-6 w-px bg-gray-300 mx-3"></div>
+        <div class="flex items-center">
+          <div class="text-base text-gray-500 mr-2">用时:</div>
+          <div class="text-xl font-mono font-semibold text-blue-600">{{ formattedTime }}</div>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2 justify-center">
-        <Button
-          variant="primary"
-          size="sm"
+      <!-- 主要控制按钮 -->
+      <div class="grid grid-cols-3 gap-4 w-full mb-2">
+        <button
+          class="py-3 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white text-base font-medium flex items-center justify-center shadow-md hover:from-blue-600 hover:to-blue-700 transition-all"
           @click="showNewGameModal = true"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           新游戏
-        </Button>
+        </button>
 
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
+          class="py-3 px-4 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-base font-medium flex items-center justify-center shadow-md hover:from-gray-200 hover:to-gray-300 transition-all"
           @click="togglePause"
         >
+          <svg v-if="isPaused" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-9-6h18" />
+          </svg>
           {{ isPaused ? '继续' : '暂停' }}
-        </Button>
+        </button>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          :disabled="!canUseCheck"
-          :class="{ 'opacity-50 cursor-not-allowed': !canUseCheck }"
+        <button
+          class="py-3 px-4 rounded-lg relative flex items-center justify-center shadow-md transition-all"
+          :class="canUseCheck ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 hover:from-green-200 hover:to-green-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
           @click="checkSelectedCell"
+          :disabled="!canUseCheck"
         >
-          检查 ({{ checksRemaining }}/{{ maxChecks }})
-        </Button>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          检查
+          <span class="ml-1">({{ checksRemaining }}/{{ maxChecks }})</span>
+        </button>
+      </div>
+
+      <!-- 功能按钮 -->
+      <div class="grid grid-cols-3 gap-4 w-full mb-2">
+        <button
+          class="py-3 px-4 rounded-lg flex items-center justify-center shadow-md transition-all"
+          :class="noteMode ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-300' : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'"
+          @click="toggleNoteMode"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+          笔记模式
+        </button>
+
+        <button
+          class="py-3 px-4 rounded-lg flex items-center justify-center shadow-md transition-all"
+          :class="canUndo ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
+          @click="undo"
+          :disabled="!canUndo"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a4 4 0 0 1 0 8H9m-6-8l3-3m0 0L3 4m3 3H3" />
+          </svg>
+          撤销
+        </button>
+
+        <button
+          class="py-3 px-4 rounded-lg flex items-center justify-center shadow-md transition-all relative"
+          :class="canUseHint ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 hover:from-amber-200 hover:to-amber-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
+          @click="getHint"
+          :disabled="!canUseHint"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          提示
+          <span class="ml-1">({{ hintsRemaining }}/{{ maxHints }})</span>
+        </button>
       </div>
     </div>
 
     <!-- 移动端模式下的布局 -->
-    <div v-else class="w-full">
-      <div class="flex justify-between items-center mb-4">
-        <div class="text-lg font-semibold">
-          {{ difficultyText }}
+    <div v-if="isMobile" class="w-full mb-2">
+      <!-- 难度和时间显示 - 单独一行 -->
+      <div class="flex justify-center items-center gap-4 mb-2 bg-white p-2 rounded-lg shadow-md">
+        <div class="flex items-center">
+          <div class="text-sm text-gray-500 mr-1">难度:</div>
+          <div class="text-base font-semibold text-blue-600">{{ difficultyText }}</div>
         </div>
-        <div class="text-lg font-mono">
-          {{ formattedTime }}
+        <div class="h-4 w-px bg-gray-300 mx-2"></div>
+        <div class="flex items-center">
+          <div class="text-sm text-gray-500 mr-1">用时:</div>
+          <div class="text-base font-mono font-semibold text-blue-600">{{ formattedTime }}</div>
         </div>
       </div>
-
-      <div class="flex flex-wrap gap-2 mb-4">
-        <Button
-          variant="primary"
+      
+      <!-- 游戏控制按钮 -->
+      <div class="grid grid-cols-3 gap-2 mb-2">
+        <button 
+          class="py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium flex items-center justify-center shadow-md hover:from-blue-600 hover:to-blue-700 transition-all"
           @click="showNewGameModal = true"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           新游戏
-        </Button>
-
-        <Button
-          variant="secondary"
+        </button>
+        
+        <button 
+          class="py-2 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-sm font-medium flex items-center justify-center shadow-md hover:from-gray-200 hover:to-gray-300 transition-all"
           @click="togglePause"
         >
+          <svg v-if="isPaused" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-9-6h18" />
+          </svg>
           {{ isPaused ? '继续' : '暂停' }}
-        </Button>
-
-        <Button
-          variant="secondary"
-          :disabled="!canUseCheck"
-          :class="{ 'opacity-50 cursor-not-allowed': !canUseCheck }"
+        </button>
+        
+        <button 
+          class="py-2 rounded-lg relative flex items-center justify-center shadow-md transition-all"
+          :class="canUseCheck ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 hover:from-green-200 hover:to-green-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
           @click="checkSelectedCell"
+          :disabled="!canUseCheck"
         >
-          检查 ({{ checksRemaining }}/{{ maxChecks }})
-        </Button>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          检查
+          <span class="ml-1 text-xs">({{ checksRemaining }})</span>
+        </button>
       </div>
-    </div>
-
-    <!-- 数字键盘 - 仅在移动端显示 -->
-    <NumberPad v-if="showNumberPad" :size="size" />
-    
-    <!-- 功能按钮 - 在PC端也显示 -->
-    <div v-if="!showNumberPad" class="mt-4 flex flex-wrap gap-2 justify-center w-full">
-      <Button
-        variant="secondary"
-        size="sm"
-        :class="{ 'bg-blue-100 hover:bg-blue-200': noteMode }"
-        @click="toggleNoteMode"
-      >
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      
+      <!-- 移动端功能按钮行 -->
+      <div class="grid grid-cols-3 gap-2 mb-2">
+        <button
+          class="py-2 rounded-lg flex items-center justify-center shadow-md transition-all"
+          :class="noteMode ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-300' : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'"
+          @click="toggleNoteMode"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
-          笔记模式
-        </div>
-      </Button>
+          笔记
+        </button>
 
-      <Button
-        variant="secondary"
-        size="sm"
-        :disabled="!canUndo"
-        :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
-        @click="undo"
-      >
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button
+          class="py-2 rounded-lg flex items-center justify-center shadow-md transition-all"
+          :class="canUndo ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
+          @click="undo"
+          :disabled="!canUndo"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a4 4 0 0 1 0 8H9m-6-8l3-3m0 0L3 4m3 3H3" />
           </svg>
           撤销
-        </div>
-      </Button>
+        </button>
 
-      <Button
-        variant="secondary"
-        size="sm"
-        :disabled="!canUseHint"
-        :class="{ 'opacity-50 cursor-not-allowed': !canUseHint }"
-        @click="getHint"
-      >
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button
+          class="py-2 rounded-lg flex items-center justify-center shadow-md transition-all relative"
+          :class="canUseHint ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 hover:from-amber-200 hover:to-amber-300' : 'bg-gray-100 text-gray-400 opacity-70 cursor-not-allowed'"
+          @click="getHint"
+          :disabled="!canUseHint"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
-          提示 ({{ hintsRemaining }}/{{ maxHints }})
-        </div>
-      </Button>
+          提示
+          <span class="ml-1 text-xs">({{ hintsRemaining }})</span>
+        </button>
+      </div>
     </div>
 
     <!-- 新游戏模态框 -->
@@ -219,6 +280,10 @@ const props = defineProps({
   showNumberPad: {
     type: Boolean,
     default: true
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
   }
 });
 
